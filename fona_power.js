@@ -8,6 +8,8 @@ var FonaPower = module.exports = function() {
   this.adcVoltage = null;
   this.batteryPercentage = null;
   this.batteryVoltage = null;
+  
+  
 };
 util.inherits(FonaPower, Device);
 
@@ -30,8 +32,11 @@ FonaPower.prototype.getBatteryVoltage = function(cb) {
   
   var tasks = [
   {    
-    before: function() {self.state = 'sending-sms'},
+    before: function() {self.state = 'getting-battery-voltage'},
     command: 'AT+CBC',
+    regexp: /^$/
+  },
+  {
     regexp: /^\+CBC: .*,(.*),(.*)/,
     onMatch: function(match) {
       self.batteryPercentage = match[1];
@@ -42,40 +47,9 @@ FonaPower.prototype.getBatteryVoltage = function(cb) {
     regexp: /^$/
   },
   {
-    regexp: /OK/
-  }
-  ];
-
-  this._serialDevice.enqueue(tasks, null, function() {
-    self.state = 'waiting';
-    cb();
-  });
-};
-
-FonaPower.prototype.getADCVoltage = function(cb) {
-  this.log('getBatteryVoltage');  
-
-  var self = this;
-  
-  var tasks = [
-  {    
-    before: function() {self.state = 'sending-sms'},
-    command: 'AT+CADC?',
-    regexp: /^$/
-  },
-  {
-    regexp:  /^\+CADC: .*,(.*)/,
-    onMatch: function(match) {
-      self.adcVoltage = match[1];
-    }
-  },
-  {
-    regexp: /^$/
-  },
-  {
     regexp: /OK/,
-    onMatch: function () {
-      self.state='waiting';
+    onMatch: function(match) {
+      self.state = 'waiting';
       cb();
     }
   }
@@ -84,22 +58,21 @@ FonaPower.prototype.getADCVoltage = function(cb) {
   this._serialDevice.enqueue(tasks, null, function() {});
 };
 
-FonaPower.prototype.getBatteryVoltage = function(cb) {
-  this.log('getBatteryVoltage');  
+FonaPower.prototype.getADCVoltage = function(cb) {
+  this.log('getADCVoltage');  
 
   var self = this;
   
   var tasks = [
   {    
-    before: function() {self.state = 'sending-sms'},
-    command: 'AT+CBC',
+    before: function() {self.state = 'getting-adc-voltage'},
+    command: 'AT+CADC?',
     regexp: /^$/
   },
   {
-    regexp: /^\+CBC: .*,(.*),(.*)/,
+    regexp:  /^\+CADC: .*,(.*)/,
     onMatch: function(match) {
-      self.batteryPercentage = match[1];
-      self.batteryVoltage = match[2];
+      self.adcVoltage = match[1];
     }
   },
   {
